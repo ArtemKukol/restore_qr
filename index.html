@@ -1,417 +1,421 @@
 <!doctype html>
 <html lang="ru">
-	<head>
-		<meta charset="UTF-8" />
-		<title>Восстановление повреждённого QR</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<!-- jsQR из CDN -->
-		<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-		<style>
-			:root {
-				--w: min(94vw, 760px);
-			}
+  <head>
+    <meta charset="UTF-8" />
+    <title>Восстановление повреждённого QR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- jsQR из CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <style>
+      :root {
+        --w: min(94vw, 760px);
+      }
 
-			* {
-				box-sizing: border-box;
-			}
+      * {
+        box-sizing: border-box;
+      }
 
-			body {
-				margin: 0;
-				padding: 1.5rem;
-				font:
-					16px/1.4 system-ui,
-					-apple-system,
-					BlinkMacSystemFont,
-					'Segoe UI',
-					sans-serif;
-				background: #f4f4f4;
-				color: #222;
-			}
+      body {
+        margin: 0;
+        padding: 1.5rem;
+        font:
+          16px/1.4 system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: #f4f4f4;
+        color: #222;
+      }
 
-			.wrap {
-				margin: 0 auto;
-				width: var(--w);
-			}
+      .wrap {
+        margin: 0 auto;
+        width: var(--w);
+      }
 
-			h1 {
-				margin: 0 0 1rem;
-				font-size: 1.6rem;
-			}
+      h1 {
+        margin: 0 0 1rem;
+        font-size: 1.6rem;
+      }
 
-			p {
-				margin: 0 0 1rem;
-			}
+      p {
+        margin: 0 0 1rem;
+      }
 
-			.controls {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 0.5rem;
-				margin-bottom: 1rem;
-			}
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
 
-			.file-label {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.5rem;
-				padding: 0.6rem 0.9rem;
-				border-radius: 6px;
-				background: #0057e7;
-				color: #fff;
-				cursor: pointer;
-				font-size: 0.9rem;
-			}
+      .file-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 0.9rem;
+        border-radius: 6px;
+        background: #0057e7;
+        color: #fff;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
 
-			.file-label span {
-				white-space: nowrap;
-			}
+      .file-label span {
+        white-space: nowrap;
+      }
 
-			#fileInput {
-				display: none;
-			}
+      #fileInput {
+        position: absolute;
+        left: -9999px;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+      }
 
-			button {
-				padding: 0.6rem 0.9rem;
-				border: none;
-				border-radius: 6px;
-				background: #0057e7;
-				color: #fff;
-				cursor: pointer;
-				font-size: 0.9rem;
-				transition: background 0.2s;
-			}
+      button {
+        padding: 0.6rem 0.9rem;
+        border: none;
+        border-radius: 6px;
+        background: #0057e7;
+        color: #fff;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+      }
 
-			button:hover:enabled,
-			.file-label:hover {
-				background: #003f9e;
-			}
+      button:hover:enabled,
+      .file-label:hover {
+        background: #003f9e;
+      }
 
-			button:disabled {
-				background: #999;
-				cursor: not-allowed;
-			}
+      button:disabled {
+        background: #999;
+        cursor: not-allowed;
+      }
 
-			.canvases {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-				gap: 0.75rem;
-				margin-bottom: 1rem;
-			}
+      .canvases {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
 
-			.canvas-block {
-				background: #fff;
-				border-radius: 8px;
-				padding: 0.5rem;
-				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-			}
+      .canvas-block {
+        background: #fff;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
 
-			.canvas-block h2 {
-				margin: 0 0 0.25rem;
-				font-size: 0.95rem;
-				font-weight: 600;
-			}
+      .canvas-block h2 {
+        margin: 0 0 0.25rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
 
-			canvas {
-				width: 100%;
-				max-height: 360px;
-				border-radius: 4px;
-				border: 1px solid #ddd;
-				background: #fafafa;
-			}
+      canvas {
+        width: 100%;
+        max-height: 360px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        background: #fafafa;
+      }
 
-			#result {
-				padding: 0.75rem;
-				border-radius: 8px;
-				background: #eee;
-				font-size: 0.95rem;
-				white-space: pre-wrap;
-				word-break: break-word;
-			}
+      #result {
+        padding: 0.75rem;
+        border-radius: 8px;
+        background: #eee;
+        font-size: 0.95rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
 
-			#result.success {
-				background: #e0f7ea;
-				border: 1px solid #27ae60;
-			}
+      #result.success {
+        background: #e0f7ea;
+        border: 1px solid #27ae60;
+      }
 
-			#result.error {
-				background: #fdecea;
-				border: 1px solid #c0392b;
-			}
+      #result.error {
+        background: #fdecea;
+        border: 1px solid #c0392b;
+      }
 
-			.params {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 0.75rem;
-				margin-bottom: 0.75rem;
-				font-size: 0.85rem;
-			}
+      .params {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.85rem;
+      }
 
-			.param {
-				display: flex;
-				flex-direction: column;
-				gap: 0.25rem;
-			}
+      .param {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
 
-			.param label {
-				font-weight: 600;
-			}
+      .param label {
+        font-weight: 600;
+      }
 
-			.param input[type='range'] {
-				width: 190px;
-			}
+      .param input[type="range"] {
+        width: 190px;
+      }
 
-			.small {
-				font-size: 0.8rem;
-				color: #555;
-			}
-		</style>
-	</head>
-	<body>
-		<div class="wrap">
-			<h1>Восстановление повреждённого QR</h1>
-			<p>
-				Загрузи фото QR-кода, приложение попытается улучшить изображение и
-				считать данные с помощью встроенной коррекции ошибок QR.[web:25][web:23]
-			</p>
+      .small {
+        font-size: 0.8rem;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Восстановление повреждённого QR</h1>
+      <p>
+        Загрузи фото QR-кода, приложение попытается улучшить изображение и
+        считать данные с помощью встроенной коррекции ошибок QR.
+      </p>
 
-			<div class="controls">
-				<label class="file-label" for="fileInput">
-					<span>📷 Выбрать изображение</span>
-				</label>
-				<button id="scanBtn" disabled>Считать QR</button>
-				<button id="resetBtn" disabled>Очистить</button>
-			</div>
+      <div class="controls">
+        <label class="file-label" for="fileInput">
+          <span>📷 Выбрать изображение</span>
+        </label>
+        <input type="file" id="fileInput" accept="image/*" />
+        <!-- убрал disabled, чтобы кнопка была всегда активна -->
+        <button id="scanBtn">Считать QR</button>
+        <button id="resetBtn" disabled>Очистить</button>
+      </div>
 
-			<div class="params">
-				<div class="param">
-					<label for="thresholdRange">Порог бинаризации</label>
-					<input
-						type="range"
-						id="thresholdRange"
-						min="40"
-						max="200"
-						value="128"
-					/>
-					<span class="small"
-						>Если QR светлый/тёмный, подвигай слайдер и запусти считывание
-						снова.</span
-					>
-				</div>
-			</div>
+      <div class="params">
+        <div class="param">
+          <label for="thresholdRange">Порог бинаризации</label>
+          <input
+            type="range"
+            id="thresholdRange"
+            min="40"
+            max="200"
+            value="128"
+          />
+          <span class="small">
+            Если QR светлый/тёмный, подвигай слайдер и запусти считывание снова.
+          </span>
+        </div>
+      </div>
 
-			<div class="canvases">
-				<div class="canvas-block">
-					<h2>Оригинал</h2>
-					<canvas id="originalCanvas"></canvas>
-				</div>
-				<div class="canvas-block">
-					<h2>После обработки</h2>
-					<canvas id="processedCanvas"></canvas>
-				</div>
-			</div>
+      <div class="canvases">
+        <div class="canvas-block">
+          <h2>Оригинал</h2>
+          <canvas id="originalCanvas"></canvas>
+        </div>
+        <div class="canvas-block">
+          <h2>После обработки</h2>
+          <canvas id="processedCanvas"></canvas>
+        </div>
+      </div>
 
-			<div id="result">Шаг 1: выбери изображение с QR-кодом.</div>
-		</div>
+      <div id="result">Шаг 1: выбери изображение с QR-кодом.</div>
+    </div>
 
-		<script>
-			const fileInput = document.getElementById('fileInput');
-			const scanBtn = document.getElementById('scanBtn');
-			const resetBtn = document.getElementById('resetBtn');
-			const thresholdRange = document.getElementById('thresholdRange');
-			const originalCanvas = document.getElementById('originalCanvas');
-			const processedCanvas = document.getElementById('processedCanvas');
-			const resultEl = document.getElementById('result');
+    <script>
+      const fileInput = document.getElementById("fileInput");
+      const scanBtn = document.getElementById("scanBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const thresholdRange = document.getElementById("thresholdRange");
+      const originalCanvas = document.getElementById("originalCanvas");
+      const processedCanvas = document.getElementById("processedCanvas");
+      const resultEl = document.getElementById("result");
 
-			const originalCtx = originalCanvas.getContext('2d');
-			const processedCtx = processedCanvas.getContext('2d');
+      const originalCtx = originalCanvas.getContext("2d");
+      const processedCtx = processedCanvas.getContext("2d");
 
-			let loadedImageData = null;
+      let loadedImageData = null;
 
-			fileInput.addEventListener('change', handleFileChange);
-			scanBtn.addEventListener('click', handleScan);
-			resetBtn.addEventListener('click', resetAll);
-			thresholdRange.addEventListener('input', () => {
-				if (loadedImageData) {
-					drawProcessed();
-				}
-			});
+      fileInput.addEventListener("change", handleFileChange);
+      scanBtn.addEventListener("click", handleScan);
+      resetBtn.addEventListener("click", resetAll);
+      thresholdRange.addEventListener("input", () => {
+        if (loadedImageData) {
+          drawProcessed();
+        }
+      });
 
-			function handleFileChange() {
-				const file = fileInput.files[0];
-				if (!file) return;
+      function handleFileChange() {
+        const file = fileInput.files[0];
+        if (!file) return;
 
-				const img = new Image();
-				img.onload = () => {
-					const maxW = 700;
-					const scale = img.width > maxW ? maxW / img.width : 1;
-					const w = img.width * scale;
-					const h = img.height * scale;
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 700;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          const w = img.width * scale;
+          const h = img.height * scale;
 
-					originalCanvas.width = w;
-					originalCanvas.height = h;
-					processedCanvas.width = w;
-					processedCanvas.height = h;
+          originalCanvas.width = w;
+          originalCanvas.height = h;
+          processedCanvas.width = w;
+          processedCanvas.height = h;
 
-					originalCtx.clearRect(0, 0, w, h);
-					processedCtx.clearRect(0, 0, w, h);
+          originalCtx.clearRect(0, 0, w, h);
+          processedCtx.clearRect(0, 0, w, h);
 
-					originalCtx.drawImage(img, 0, 0, w, h);
-					loadedImageData = originalCtx.getImageData(0, 0, w, h);
+          originalCtx.drawImage(img, 0, 0, w, h);
+          loadedImageData = originalCtx.getImageData(0, 0, w, h);
 
-					drawProcessed();
+          drawProcessed();
 
-					setResult(
-						'Шаг 2: нажми «Считать QR».\nЕсли не получится, попробуй изменить порог бинаризации.',
-						'info',
-					);
-					scanBtn.disabled = false;
-					resetBtn.disabled = false;
-				};
-				img.onerror = () => {
-					setResult(
-						'Не удалось загрузить изображение. Попробуй другой файл.',
-						'error',
-					);
-				};
-				img.src = URL.createObjectURL(file);
-			}
+          setResult(
+            "Шаг 2: нажми «Считать QR».\nЕсли не получится, попробуй изменить порог бинаризации.",
+            "info"
+          );
+          resetBtn.disabled = false;
+        };
+        img.onerror = () => {
+          setResult(
+            "Не удалось загрузить изображение. Попробуй другой файл.",
+            "error"
+          );
+        };
+        img.src = URL.createObjectURL(file);
+      }
 
-			function handleScan() {
-				if (!loadedImageData) {
-					setResult('Сначала выбери изображение с QR-кодом.', 'error');
-					return;
-				}
+      function handleScan() {
+        if (!loadedImageData) {
+          setResult("Сначала выбери изображение с QR-кодом.", "error");
+          return;
+        }
 
-				const processedImageData = preprocessImage(
-					loadedImageData,
-					parseInt(thresholdRange.value, 10),
-				);
-				processedCtx.putImageData(processedImageData, 0, 0);
+        const processedImageData = preprocessImage(
+          loadedImageData,
+          parseInt(thresholdRange.value, 10)
+        );
+        processedCtx.putImageData(processedImageData, 0, 0);
 
-				const code = jsQR(
-					processedImageData.data,
-					processedImageData.width,
-					processedImageData.height,
-					{
-						inversionAttempts: 'attemptBoth',
-					},
-				);
+        const code = jsQR(
+          processedImageData.data,
+          processedImageData.width,
+          processedImageData.height,
+          {
+            inversionAttempts: "attemptBoth",
+          }
+        );
 
-				if (code) {
-					let text = '✅ Успех! Данные QR-кода:\n\n' + code.data;
-					text +=
-						'\n\n(Попробуй другое фото или порог, если результат некорректен.)';
-					setResult(text, 'success');
-				} else {
-					let text = '❌ Не удалось считать QR.\n\nСоветы:\n';
-					text += '• Попробуй уменьшить/увеличить порог бинаризации.\n';
-					text += '• Вырежи QR ближе, чтобы меньше было фона.\n';
-					text += '• Сделай более резкое и ровное фото без бликов.';
-					setResult(text, 'error');
-				}
-			}
+        if (code) {
+          let text = "✅ Успех! Данные QR-кода:\n\n" + code.data;
+          text +=
+            "\n\n(Попробуй другое фото или порог, если результат некорректен.)";
+          setResult(text, "success");
+        } else {
+          let text = "❌ Не удалось считать QR.\n\nСоветы:\n";
+          text += "• Попробуй уменьшить/увеличить порог бинаризации.\n";
+          text += "• Вырежи QR ближе, чтобы меньше было фона.\n";
+          text += "• Сделай более резкое и ровное фото без бликов.";
+          setResult(text, "error");
+        }
+      }
 
-			function resetAll() {
-				fileInput.value = '';
-				loadedImageData = null;
-				originalCtx.clearRect(
-					0,
-					0,
-					originalCanvas.width,
-					originalCanvas.height,
-				);
-				processedCtx.clearRect(
-					0,
-					0,
-					processedCanvas.width,
-					processedCanvas.height,
-				);
-				scanBtn.disabled = true;
-				resetBtn.disabled = true;
-				thresholdRange.value = 128;
-				setResult('Шаг 1: выбери изображение с QR-кодом.', 'info');
-			}
+      function resetAll() {
+        fileInput.value = "";
+        loadedImageData = null;
+        originalCtx.clearRect(
+          0,
+          0,
+          originalCanvas.width,
+          originalCanvas.height
+        );
+        processedCtx.clearRect(
+          0,
+          0,
+          processedCanvas.width,
+          processedCanvas.height
+        );
+        // scanBtn оставляем активной
+        resetBtn.disabled = true;
+        thresholdRange.value = 128;
+        setResult("Шаг 1: выбери изображение с QR-кодом.", "info");
+      }
 
-			function drawProcessed() {
-				const processedImageData = preprocessImage(
-					loadedImageData,
-					parseInt(thresholdRange.value, 10),
-				);
-				processedCtx.putImageData(processedImageData, 0, 0);
-			}
+      function drawProcessed() {
+        const processedImageData = preprocessImage(
+          loadedImageData,
+          parseInt(thresholdRange.value, 10)
+        );
+        processedCtx.putImageData(processedImageData, 0, 0);
+      }
 
-			function preprocessImage(imageData, threshold) {
-				const w = imageData.width;
-				const h = imageData.height;
-				const src = new Uint8ClampedArray(imageData.data);
-				const gray = new Uint8ClampedArray(src.length);
+      function preprocessImage(imageData, threshold) {
+        const w = imageData.width;
+        const h = imageData.height;
+        const src = new Uint8ClampedArray(imageData.data);
+        const gray = new Uint8ClampedArray(src.length);
 
-				for (let i = 0; i < src.length; i += 4) {
-					const r = src[i];
-					const g = src[i + 1];
-					const b = src[i + 2];
-					const v = 0.3 * r + 0.59 * g + 0.11 * b;
-					gray[i] = gray[i + 1] = gray[i + 2] = v;
-					gray[i + 3] = 255;
-				}
+        for (let i = 0; i < src.length; i += 4) {
+          const r = src[i];
+          const g = src[i + 1];
+          const b = src[i + 2];
+          const v = 0.3 * r + 0.59 * g + 0.11 * b;
+          gray[i] = gray[i + 1] = gray[i + 2] = v;
+          gray[i + 3] = 255;
+        }
 
-				const blurred = boxBlur(gray, w, h, 1);
+        const blurred = boxBlur(gray, w, h, 1);
 
-				for (let i = 0; i < blurred.length; i += 4) {
-					const v = blurred[i];
-					const val = v > threshold ? 255 : 0;
-					blurred[i] = blurred[i + 1] = blurred[i + 2] = val;
-					blurred[i + 3] = 255;
-				}
+        for (let i = 0; i < blurred.length; i += 4) {
+          const v = blurred[i];
+          const val = v > threshold ? 255 : 0;
+          blurred[i] = blurred[i + 1] = blurred[i + 2] = val;
+          blurred[i + 3] = 255;
+        }
 
-				return new ImageData(blurred, w, h);
-			}
+        return new ImageData(blurred, w, h);
+      }
 
-			function boxBlur(src, width, height, radius) {
-				if (radius < 1) return src;
-				const dst = new Uint8ClampedArray(src.length);
+      function boxBlur(src, width, height, radius) {
+        if (radius < 1) return src;
+        const dst = new Uint8ClampedArray(src.length);
 
-				for (let y = 0; y < height; y++) {
-					for (let x = 0; x < width; x++) {
-						let r = 0,
-							g = 0,
-							b = 0,
-							a = 0;
-						let count = 0;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            let r = 0,
+              g = 0,
+              b = 0,
+              a = 0;
+            let count = 0;
 
-						for (let dy = -radius; dy <= radius; dy++) {
-							const yy = y + dy;
-							if (yy < 0 || yy >= height) continue;
+            for (let dy = -radius; dy <= radius; dy++) {
+              const yy = y + dy;
+              if (yy < 0 || yy >= height) continue;
 
-							for (let dx = -radius; dx <= radius; dx++) {
-								const xx = x + dx;
-								if (xx < 0 || xx >= width) continue;
+              for (let dx = -radius; dx <= radius; dx++) {
+                const xx = x + dx;
+                if (xx < 0 || xx >= width) continue;
 
-								const idx = (yy * width + xx) * 4;
-								r += src[idx];
-								g += src[idx + 1];
-								b += src[idx + 2];
-								a += src[idx + 3];
-								count++;
-							}
-						}
+                const idx = (yy * width + xx) * 4;
+                r += src[idx];
+                g += src[idx + 1];
+                b += src[idx + 2];
+                a += src[idx + 3];
+                count++;
+              }
+            }
 
-						const i = (y * width + x) * 4;
-						dst[i] = r / count;
-						dst[i + 1] = g / count;
-						dst[i + 2] = b / count;
-						dst[i + 3] = a / count;
-					}
-				}
+            const i = (y * width + x) * 4;
+            dst[i] = r / count;
+            dst[i + 1] = g / count;
+            dst[i + 2] = b / count;
+            dst[i + 3] = a / count;
+          }
+        }
 
-				return dst;
-			}
+        return dst;
+      }
 
-			function setResult(text, type) {
-				resultEl.textContent = text;
-				resultEl.classList.remove('success', 'error');
-				if (type === 'success') resultEl.classList.add('success');
-				if (type === 'error') resultEl.classList.add('error');
-			}
-		</script>
-	</body>
+      function setResult(text, type) {
+        resultEl.textContent = text;
+        resultEl.classList.remove("success", "error");
+        if (type === "success") resultEl.classList.add("success");
+        if (type === "error") resultEl.classList.add("error");
+      }
+    </script>
+  </body>
 </html>
