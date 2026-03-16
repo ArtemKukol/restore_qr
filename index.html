@@ -65,6 +65,7 @@
         white-space: nowrap;
       }
 
+      /* прячем input, но не через display:none */
       #fileInput {
         position: absolute;
         left: -9999px;
@@ -182,7 +183,6 @@
           <span>📷 Выбрать изображение</span>
         </label>
         <input type="file" id="fileInput" accept="image/*" />
-        <!-- убрал disabled, чтобы кнопка была всегда активна -->
         <button id="scanBtn">Считать QR</button>
         <button id="resetBtn" disabled>Очистить</button>
       </div>
@@ -280,6 +280,8 @@
       }
 
       function handleScan() {
+        console.log("handleScan click");
+
         if (!loadedImageData) {
           setResult("Сначала выбери изображение с QR-кодом.", "error");
           return;
@@ -291,14 +293,24 @@
         );
         processedCtx.putImageData(processedImageData, 0, 0);
 
-        const code = jsQR(
-          processedImageData.data,
-          processedImageData.width,
-          processedImageData.height,
-          {
-            inversionAttempts: "attemptBoth",
-          }
-        );
+        let code;
+        try {
+          code = jsQR(
+            processedImageData.data,
+            processedImageData.width,
+            processedImageData.height,
+            {
+              inversionAttempts: "attemptBoth",
+            }
+          );
+        } catch (e) {
+          console.error("jsQR error:", e);
+          setResult(
+            "Произошла ошибка при распознавании QR. Открой консоль (F12) и посмотри подробности.",
+            "error"
+          );
+          return;
+        }
 
         if (code) {
           let text = "✅ Успех! Данные QR-кода:\n\n" + code.data;
@@ -329,7 +341,6 @@
           processedCanvas.width,
           processedCanvas.height
         );
-        // scanBtn оставляем активной
         resetBtn.disabled = true;
         thresholdRange.value = 128;
         setResult("Шаг 1: выбери изображение с QR-кодом.", "info");
